@@ -58,7 +58,16 @@ export default function ReportsPage() {
                 <p className="section-subtitle">Share of prospects in each workflow stage.</p>
               </div>
             </div>
-            <div className="data-table-panel">
+            <div className="mobile-card-list">
+              {Object.entries(statusCounts).map(([status, count]) => (
+                <article key={status} className="report-card-row">
+                  <span className="cell-strong">{status}</span>
+                  <span>{count} leads</span>
+                  <span>{Math.round((count / totalLeads) * 100)}%</span>
+                </article>
+              ))}
+            </div>
+            <div className="data-table-panel data-table-panel--desktop">
               <table className="data-table data-table--compact">
                 <thead>
                   <tr>

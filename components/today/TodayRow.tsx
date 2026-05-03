@@ -7,20 +7,11 @@ import { DueStateChip } from "@/components/ui/DueStateChip";
 import { StatusBadge } from "@/components/ui/Badge";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import type { ActivityType, Lead } from "@/types";
-import { addDays, formatCurrency, formatDate, startOfToday, statusLabel } from "@/lib/utils";
+import { addDays, formatCurrency, formatDate, getWhatsAppUrl, startOfToday, statusLabel } from "@/lib/utils";
 
 type QueueType = "pinned" | "missed" | "today" | "stale";
 
 const quickActivityTypes: ActivityType[] = ["call", "whatsapp", "email", "meeting", "note"];
-
-function whatsappHref(phone: string | null) {
-  if (!phone) {
-    return undefined;
-  }
-
-  const digits = phone.replace(/\D/g, "").replace(/^91/, "");
-  return digits ? `https://wa.me/91${digits}` : undefined;
-}
 
 function dueStateFor(queue: QueueType) {
   if (queue === "missed") {
@@ -122,17 +113,23 @@ export function TodayRow({ lead, queue }: { lead: Lead; queue: QueueType }) {
           className="btn btn-secondary btn-icon"
         >
           <Phone size={15} />
+          <span className="mobile-action-label">Call</span>
         </a>
-        <a
+        <button
+          type="button"
           aria-label={`WhatsApp ${lead.name}`}
           title={lead.phone ? "WhatsApp" : "No phone added"}
-          href={whatsappHref(lead.phone)}
-          target="_blank"
-          rel="noreferrer"
+          disabled={!lead.phone}
+          onClick={() => {
+            if (lead.phone) {
+              window.open(getWhatsAppUrl(lead.phone), "_blank");
+            }
+          }}
           className="btn btn-secondary btn-icon"
         >
           <MessageCircle size={15} />
-        </a>
+          <span className="mobile-action-label">WhatsApp</span>
+        </button>
         <button
           type="button"
           title="Log activity"
@@ -141,6 +138,7 @@ export function TodayRow({ lead, queue }: { lead: Lead; queue: QueueType }) {
           className="btn btn-secondary btn-icon"
         >
           <NotebookPen size={15} />
+          <span className="mobile-action-label">Log</span>
         </button>
         <button
           type="button"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Activity, ActivityType } from "@/types";
 
 const activityTypes: ActivityType[] = ["call", "whatsapp", "email", "meeting", "demo", "note", "follow_up"];
@@ -12,6 +13,7 @@ export function LogActivityForm({
   leadId: number;
   onLogged?: (activity: Activity) => void;
 }) {
+  const router = useRouter();
   const [type, setType] = useState<ActivityType>("call");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -31,6 +33,7 @@ export function LogActivityForm({
     if (response.ok && data.activity) {
       setDescription("");
       onLogged?.(data.activity);
+      router.refresh();
     }
   }
 

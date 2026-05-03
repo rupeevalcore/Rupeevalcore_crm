@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MessageCircle, Pencil, Phone, Plus, Search, Trash2, X } from "lucide-react";
 import { LeadForm } from "@/components/leads/LeadForm";
 import { DueStateChip } from "@/components/ui/DueStateChip";
@@ -9,7 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { StatusBadge, TypeBadge } from "@/components/ui/Badge";
 import { sortByPriority } from "@/lib/priority";
-import { formatCurrency, formatDate, startOfToday } from "@/lib/utils";
+import { formatCurrency, formatDate, getWhatsAppUrl, startOfToday } from "@/lib/utils";
 import type { Lead, LeadPriority, LeadStatus, LeadType } from "@/types";
 
 const typeOptions: Array<"All" | LeadType> = ["All", "School", "College", "Corporate"];
@@ -23,15 +24,6 @@ const statusOptions: Array<"All" | LeadStatus> = [
   "Closed Lost",
 ];
 const priorityOptions: Array<"All" | LeadPriority> = ["All", "High", "Medium", "Low"];
-
-function whatsappHref(phone: string | null) {
-  if (!phone) {
-    return undefined;
-  }
-
-  const digits = phone.replace(/\D/g, "").replace(/^91/, "");
-  return digits ? `https://wa.me/91${digits}` : undefined;
-}
 
 function followupState(lead: Lead) {
   if (!lead.nextFollowupDate) {
@@ -55,6 +47,7 @@ function followupState(lead: Lead) {
 }
 
 export function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
+  const router = useRouter();
   const [leads, setLeads] = useState(initialLeads);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | LeadType>("All");
@@ -125,6 +118,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
     const response = await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
     if (response.ok) {
       await fetchLeads();
+      router.refresh();
     }
   }
 
@@ -195,7 +189,109 @@ export function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
         </div>
       </div>
 
-      <div className="data-table-panel">
+      <div className="mobile-card-list">
+        {filtered.map((lead) => (
+          <article key={lead.id} className="lead-card">
+            <div className="lead-card__header">
+              <div className="lead-card__identity">
+                <a href={`/leads/${lead.id}`} className="cell-primary">
+                  {lead.name}
+                </a>
+                <div className="cell-secondary">{lead.organization}</div>
+              </div>
+              <div className="lead-card__badges">
+                <StatusBadge status={lead.status} />
+                <PriorityBadge priority={lead.priority} />
+              </div>
+            </div>
+
+            <div className="lead-card__followup">
+              <div>
+                <span className="card-label">Next follow-up</span>
+                <div className="lead-card__value">
+                  {followupState(lead)}
+                  <span>{formatDate(lead.nextFollowupDate)}</span>
+                </div>
+              </div>
+              <div>
+                <span className="card-label">Phone</span>
+                <div className="lead-card__value">{lead.phone ?? "No phone"}</div>
+              </div>
+            </div>
+
+            <div className="lead-card__secondary">
+              <TypeBadge type={lead.type} />
+              <span>{formatCurrency(lead.dealValue)}</span>
+            </div>
+
+            <div className="lead-card__actions">
+              <a
+                aria-label={`Call ${lead.name}`}
+                title={lead.phone ? "Call" : "No phone added"}
+                href={lead.phone ? `tel:${lead.phone}` : undefined}
+                className="btn btn-secondary"
+              >
+                <Phone size={15} />
+                Call
+              </a>
+              <button
+                type="button"
+                aria-label={`WhatsApp ${lead.name}`}
+                title={lead.phone ? "WhatsApp" : "No phone added"}
+                disabled={!lead.phone}
+                onClick={() => {
+                  if (lead.phone) {
+                    window.open(getWhatsAppUrl(lead.phone), "_blank");
+                  }
+                }}
+                className="btn btn-secondary"
+              >
+                <MessageCircle size={15} />
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditModal(lead)}
+                className="btn btn-secondary"
+              >
+                <Pencil size={15} />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteLead(lead)}
+                className="btn btn-danger"
+              >
+                <Trash2 size={15} />
+                Delete
+              </button>
+            </div>
+          </article>
+        ))}
+        {leads.length === 0 ? (
+          <EmptyState
+            title="No leads yet."
+            description="Add the first school, college, or corporate prospect to start tracking outreach."
+            action={
+              <button type="button" onClick={openAddModal} className="btn btn-primary">
+                Add lead
+              </button>
+            }
+          />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            title="No leads match these filters."
+            description="Clear filters or search for another organization, phone, or contact."
+            action={
+              <button type="button" onClick={clearFilters} className="btn btn-secondary">
+                Clear filters
+              </button>
+            }
+          />
+        ) : null}
+      </div>
+
+      <div className="data-table-panel data-table-panel--desktop">
         <table className="data-table">
           <thead>
             <tr>
@@ -258,16 +354,20 @@ export function LeadsTable({ initialLeads }: { initialLeads: Lead[] }) {
                     >
                       <Phone size={15} />
                     </a>
-                    <a
+                    <button
+                      type="button"
                       aria-label={`WhatsApp ${lead.name}`}
                       title={lead.phone ? "WhatsApp" : "No phone added"}
-                      href={whatsappHref(lead.phone)}
-                      target="_blank"
-                      rel="noreferrer"
+                      disabled={!lead.phone}
+                      onClick={() => {
+                        if (lead.phone) {
+                          window.open(getWhatsAppUrl(lead.phone), "_blank");
+                        }
+                      }}
                       className="btn btn-secondary btn-icon"
                     >
                       <MessageCircle size={15} />
-                    </a>
+                    </button>
                     <button
                       type="button"
                       aria-label={`Edit ${lead.name}`}

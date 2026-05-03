@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Lead, LeadInput, LeadStatus, LeadType } from "@/types";
 import { toDateInputValue } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export function LeadForm({
   lead?: Lead;
   onSaved?: (lead: Lead) => void;
 }) {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(() => createInitialState(lead));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export function LeadForm({
     }
 
     onSaved?.(data.lead);
+    router.refresh();
     if (!lead) {
       setForm(createInitialState());
     }

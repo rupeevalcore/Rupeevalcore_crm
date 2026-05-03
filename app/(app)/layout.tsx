@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <HeaderNav />
 
-        <div className="top-nav__actions">
+        <div className="top-nav__session">
           <form action={logout}>
             <button type="submit" className="btn btn-secondary">
               Sign out

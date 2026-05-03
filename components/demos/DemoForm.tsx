@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Demo, DemoStatus, Lead } from "@/types";
 
 const statuses: DemoStatus[] = ["Scheduled", "Completed", "Converted", "Not Converted"];
@@ -14,6 +15,7 @@ export function DemoForm({
   leadId?: number;
   onSaved?: (demo: Demo) => void;
 }) {
+  const router = useRouter();
   const [selectedLeadId, setSelectedLeadId] = useState(leadId ?? leads[0]?.id ?? 0);
   const [demoDate, setDemoDate] = useState("");
   const [status, setStatus] = useState<DemoStatus>("Scheduled");
@@ -41,6 +43,7 @@ export function DemoForm({
       setDemoDate("");
       setNotes("");
       onSaved?.(data.demo);
+      router.refresh();
     }
   }
 

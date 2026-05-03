@@ -61,6 +61,12 @@ export function formatCurrency(value: number | null | undefined) {
   }).format(value ?? 0);
 }
 
+export function getWhatsAppUrl(phone: string): string {
+  const cleaned = phone.replace(/\D/g, "");
+  const number = cleaned.startsWith("91") ? cleaned : `91${cleaned}`;
+  return `https://wa.me/${number}`;
+}
+
 export function statusLabel(value: string) {
   return value
     .split("_")
